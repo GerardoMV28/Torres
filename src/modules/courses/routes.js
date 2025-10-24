@@ -1,3 +1,4 @@
+// src/modules/courses/routes.js - CON AUTH ACTUALIZADO
 import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -21,6 +22,7 @@ r.get('/', async (_req, res) => {
   res.json(list.map(x => x.toJSON()));
 });
 
+// ✅ CORRECTO: auth con rol 'teacher'
 r.post('/', auth('teacher'), async (req, res) => {
   const { title, description } = req.body;
   if (!title) return res.status(400).json({ message: 'title requerido' });
@@ -28,6 +30,7 @@ r.post('/', auth('teacher'), async (req, res) => {
   res.json(course.toJSON());
 });
 
+// ✅ CORRECTO: auth con rol 'teacher'
 r.post('/upload/:id', auth('teacher'), upload.single('file'), async (req, res) => {
   const course = await Course.findById(req.params.id);
   if (!course) return res.status(404).json({ message: 'Curso no encontrado' });
