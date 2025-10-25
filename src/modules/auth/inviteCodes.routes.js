@@ -1,4 +1,3 @@
-// src/modules/auth/inviteCodes.routes.js
 import express from 'express';
 import InviteCode from './InviteCode.model.js';
 import { auth, requireAdmin } from '../../middleware/auth.js';
@@ -6,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-// Aplicar autenticación a todas las rutas (excepto verify)
+
 router.use((req, res, next) => {
   console.log('🛂 [ROUTE DEBUG] Llegó a invite-codes routes:', req.method, req.url);
   console.log('🛂 [ROUTE DEBUG] Headers:', JSON.stringify(req.headers));
@@ -19,54 +18,35 @@ router.use((req, res, next) => {
     next();
   });
 });
-// Generar código de invitación (solo admin)
 
-// REEMPLAZA TEMPORALMENTE solo la función generate con ESTO:
 router.post('/generate', requireAdmin, async (req, res) => {
-  console.log('🔧 [1] Llegó a /generate después de middlewares');
-  
   try {
-    console.log('🔧 [2] Verificando req.body:', JSON.stringify(req.body));
-    console.log('🔧 [3] User ID:', req.user?.id, 'Email:', req.user?.email, 'Role:', req.user?.role);
-    
     const { expiresInDays = 7 } = req.body;
-    console.log('🔧 [4] expiresInDays:', expiresInDays);
-    
-    console.log('🔧 [5] Generando código con UUID...');
     const code = uuidv4().substring(0, 8).toUpperCase();
-    console.log('🔧 [6] Código generado:', code);
     
-    console.log('🔧 [7] Creando objeto InviteCode...');
     const inviteCode = new InviteCode({
       code,
       role: 'teacher',
       createdBy: req.user.id,
-      expiresAt: new Date(+new Date() + expiresInDays * 24 * 60 * 60 * 1000)
+      expiresAt: new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000)
     });
 
-    console.log('🔧 [8] Intentando guardar en MongoDB...');
     await inviteCode.save();
-    console.log('🔧 [9] ✅ Guardado exitoso en MongoDB');
-
-    console.log('🔧 [10] Enviando respuesta al cliente...');
+    
     res.json({ 
       message: 'Código generado exitosamente',
       code, 
       expiresAt: inviteCode.expiresAt,
       role: 'teacher'
     });
-    console.log('🔧 [11] ✅ Respuesta enviada');
     
   } catch (error) {
-    console.error('❌ [ERROR] En generate:', error.message);
-    console.error('❌ [STACK]', error.stack);
-    res.status(500).json({ 
-      message: 'Error generando código de invitación: ' + error.message 
-    });
+    console.error('Error generando código:', error);
+    res.status(500).json({ message: 'Error generando código: ' + error.message });
   }
 });
 
-// Verificar código de invitación (público)
+
 router.get('/verify/:code', async (req, res) => {
   try {
     const inviteCode = await InviteCode.findOne({ 
@@ -109,7 +89,6 @@ router.get('/verify/:code', async (req, res) => {
   }
 });
 
-// Listar códigos (solo admin)
 router.get('/', requireAdmin, async (req, res) => {
   try {
     const codes = await InviteCode.find()
@@ -124,7 +103,7 @@ router.get('/', requireAdmin, async (req, res) => {
   }
 });
 
-// Obtener estadísticas de códigos (solo admin)
+
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
     const totalCodes = await InviteCode.countDocuments();
